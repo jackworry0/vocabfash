@@ -1,0 +1,186 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#3157d5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="词汇自查">
+  <link rel="manifest" href="manifest.json">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <title>词汇自查 · CET-4/6</title>
+  <style>
+    :root{--blue:#3157d5;--ink:#172033;--muted:#68738a;--line:#e5e9f2;--bg:#f5f7fc;--green:#178451;--red:#c13d4b}
+    *{box-sizing:border-box} body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:var(--ink)}
+    .app{max-width:680px;margin:0 auto;min-height:100vh;padding:env(safe-area-inset-top) 16px calc(24px + env(safe-area-inset-bottom))}
+    header{padding:24px 4px 18px;display:flex;justify-content:space-between;align-items:center;gap:12px}
+    h1{font-size:25px;margin:0 0 5px} .sub{color:var(--muted);font-size:13px}
+    .pill{background:#e9eeff;color:var(--blue);padding:7px 10px;border-radius:99px;font-size:12px;font-weight:700}
+    nav{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px}
+    button,select,input{font:inherit} button{border:0;cursor:pointer}
+    .tab{background:#e9edf6;color:#59657a;padding:12px 8px;border-radius:12px;font-weight:700}
+    .tab.active{background:var(--blue);color:white}
+    .panel,.card{background:white;border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 6px 22px #152b5710}
+    .panel{margin-bottom:14px}.eyebrow{font-size:12px;color:var(--muted);font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+    .word{font-size:34px;font-weight:800;letter-spacing:-.03em;margin:12px 0 5px;overflow-wrap:anywhere}
+    .phonetic{color:var(--muted);font-size:14px}.meaning{font-size:21px;font-weight:700;margin:15px 0 8px}
+    .detail{line-height:1.65;color:#48536a;font-size:14px;white-space:pre-line}
+    .actions{display:flex;gap:10px;margin-top:18px}.btn{padding:13px 15px;border-radius:12px;font-weight:750;flex:1}
+    .primary{background:var(--blue);color:white}.secondary{background:#eef1f8;color:#34415a}.success{background:#e6f6ee;color:var(--green)}.danger{background:#fff0f1;color:var(--red)}
+    .progress{height:7px;background:#e9edf6;border-radius:99px;overflow:hidden;margin:12px 0 4px}.bar{height:100%;background:var(--blue);width:0;transition:width .2s}
+    .statgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}.stat{background:white;border:1px solid var(--line);padding:14px 10px;border-radius:15px}.num{font-size:23px;font-weight:800}.label{font-size:12px;color:var(--muted);margin-top:3px}
+    .question{font-size:21px;line-height:1.4;font-weight:800;margin:12px 0 18px}.options{display:grid;gap:9px}.option{background:#f6f8fc;border:1px solid var(--line);border-radius:13px;text-align:left;padding:14px;color:var(--ink)}.option:disabled{cursor:default}.option.correct{background:#e8f7ef;border-color:#74c69d}.option.wrong{background:#fff0f1;border-color:#e8a0a7}
+    .feedback{margin-top:14px;padding:12px;border-radius:12px;background:#f5f7fc;line-height:1.55;font-size:14px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px}.list{display:grid;gap:8px}.item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;justify-content:space-between;gap:12px;align-items:center}.item strong{display:block}.item small{color:var(--muted)}
+    input[type=text]{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
+    .empty{color:var(--muted);padding:16px 0;line-height:1.6}.hidden{display:none!important}
+    footer{font-size:12px;color:var(--muted);text-align:center;padding:18px 4px}
+    @media(min-width:600px){.app{padding-top:24px}.word{font-size:42px}}
+  </style>
+</head>
+<body>
+<div class="app">
+  <header>
+    <div><h1>词汇自查</h1><div class="sub">CET-4 / CET-6 · 每天进步一点</div></div>
+    <div class="pill">离线可用</div>
+  </header>
+  <nav>
+    <button class="tab active" data-tab="study">单词卡</button>
+    <button class="tab" data-tab="quiz">自我测验</button>
+    <button class="tab" data-tab="bank">词库管理</button>
+  </nav>
+  <section id="study">
+    <div class="statgrid">
+      <div class="stat"><div class="num" id="totalStat">9</div><div class="label">词库单词</div></div>
+      <div class="stat"><div class="num" id="knownStat">0</div><div class="label">已掌握</div></div>
+      <div class="stat"><div class="num" id="reviewStat">0</div><div class="label">待复习</div></div>
+    </div>
+    <div class="panel">
+      <div class="row"><span class="eyebrow">单词卡片</span><span class="sub" id="counter">1 / 9</span></div>
+      <div class="progress"><div class="bar" id="studyBar"></div></div>
+      <div id="cardFront">
+        <div class="word" id="word">prevalence</div>
+        <div class="phonetic" id="pos">名词 · n.</div>
+        <div class="actions">
+          <button class="btn secondary" id="prevBtn">上一个</button>
+          <button class="btn primary" id="revealBtn">显示释义</button>
+          <button class="btn secondary" id="nextBtn">下一个</button>
+        </div>
+      </div>
+      <div id="cardBack" class="hidden">
+        <div class="meaning" id="meaning"></div>
+        <div class="detail" id="details"></div>
+        <div class="actions">
+          <button class="btn danger" id="againBtn">还不熟</button>
+          <button class="btn success" id="knownBtn">已掌握</button>
+        </div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="eyebrow">复习提示</div>
+      <p style="line-height:1.65;margin-bottom:0">先尝试回忆中文意思，再点“显示释义”。不熟悉的单词可以标记，之后集中复习。</p>
+    </div>
+  </section>
+  <section id="quiz" class="hidden">
+    <div class="panel">
+      <div class="row"><span class="eyebrow">四选一测验</span><span class="sub" id="quizCount">准备开始</span></div>
+      <div class="progress"><div class="bar" id="quizBar"></div></div>
+      <div id="quizArea">
+        <div class="question" id="question">看英文，选择正确的中文释义。</div>
+        <div class="options" id="options"></div>
+        <div id="feedback" class="feedback hidden"></div>
+        <div class="actions"><button class="btn primary" id="nextQuestionBtn">开始测验</button></div>
+      </div>
+      <div id="quizDone" class="hidden">
+        <div class="meaning">本轮完成！</div>
+        <p id="scoreText"></p>
+        <button class="btn primary" id="restartQuiz">再测一次</button>
+      </div>
+    </div>
+  </section>
+  <section id="bank" class="hidden">
+    <div class="panel">
+      <div class="eyebrow">添加自己的单词</div>
+      <input id="newWord" type="text" placeholder="英文单词，例如: resilient">
+      <input id="newMeaning" type="text" placeholder="中文释义，例如: 有韧性的">
+      <input id="newPos" type="text" placeholder="词性（可选），例如: adj.">
+      <button class="btn primary" id="addWord" style="width:100%">添加到词库</button>
+      <p class="sub">新增内容保存在这台设备的浏览器中。</p>
+    </div>
+    <div class="panel">
+      <div class="row"><div class="eyebrow">我的词库</div><button class="btn secondary" id="exportBtn" style="flex:0;padding:9px 12px">导出备份</button></div>
+      <div class="list" id="wordList" style="margin-top:12px"></div>
+      <input type="file" id="importFile" accept=".json,application/json" class="hidden">
+      <button class="btn secondary" id="importBtn" style="width:100%;margin-top:12px">导入词库备份</button>
+    </div>
+  </section>
+  <footer>学习工具原型 · 内容仅供复习参考，请核对重要释义</footer>
+</div>
+<script>
+const starter = [
+ {word:"prevalence",pos:"名词 · n.",meaning:"普遍；流行；盛行",detail:"常见搭配：the prevalence of disease（疾病的流行）\n记忆提示：指某种现象或情况普遍存在的程度。"},
+ {word:"laborious",pos:"形容词 · adj.",meaning:"费力的；艰苦的；需要大量劳动的",detail:"常见搭配：a laborious process（费力的过程）\n近义词：arduous, painstaking"},
+ {word:"undermine",pos:"动词 · v.",meaning:"逐渐削弱；损害；暗中破坏",detail:"常见搭配：undermine confidence（削弱信心）\n注意：通常强调逐渐、隐蔽地造成损害。"},
+ {word:"integrate",pos:"动词 · v.",meaning:"使融入；整合；结合",detail:"常见搭配：integrate A into B（把 A 融入 B）\n名词：integration"},
+ {word:"ridicule",pos:"名词/动词 · n./v.",meaning:"嘲笑；奚落；嘲弄",detail:"常见搭配：be ridiculed for（因……而被嘲笑）\n形容词：ridiculous（荒谬的）"},
+ {word:"circumstantial",pos:"形容词 · adj.",meaning:"依情况而定的；间接的；环境的",detail:"常见搭配：circumstantial evidence（间接证据）\n注意：具体含义取决于上下文。"},
+ {word:"symptom",pos:"名词 · n.",meaning:"症状；征兆；表现",detail:"常见搭配：symptoms of flu（流感症状）\n相关词：symptomatic（有症状的；作为征兆的）"},
+ {word:"dismissive",pos:"形容词 · adj.",meaning:"轻视的；不屑一顾的；拒绝考虑的",detail:"常见搭配：a dismissive attitude（轻蔑的态度）\n相关动词：dismiss"},
+ {word:"domestic",pos:"形容词 · adj.",meaning:"国内的；家庭的；家用的",detail:"常见搭配：domestic market（国内市场）；domestic animals（家畜）"}
+];
+const STORAGE="vocabflash_pwa_v1";
+let data;
+try { data=JSON.parse(localStorage.getItem(STORAGE)) || {words:starter,known:[],review:[]}; } catch(e){data={words:starter,known:[],review:[]};}
+if(!Array.isArray(data.words)||!data.words.length)data.words=starter;
+let index=0, revealed=false, quizDeck=[],quizIndex=0,score=0,answered=false;
+const $=id=>document.getElementById(id);
+function save(){localStorage.setItem(STORAGE,JSON.stringify(data));renderStats();renderList();}
+function renderStats(){$("totalStat").textContent=data.words.length;$("knownStat").textContent=data.known.length;$("reviewStat").textContent=data.review.length;}
+function renderCard(){
+ if(index>=data.words.length)index=0;if(index<0)index=data.words.length-1;
+ const w=data.words[index];revealed=false;$("word").textContent=w.word;$("pos").textContent=w.pos||"单词";
+ $("cardFront").classList.remove("hidden");$("cardBack").classList.add("hidden");
+ $("counter").textContent=(index+1)+" / "+data.words.length;$("studyBar").style.width=((index+1)/data.words.length*100)+"%";
+ $("meaning").textContent=w.meaning;$("details").textContent=w.detail||"";
+}
+function showMeaning(){$("cardFront").classList.add("hidden");$("cardBack").classList.remove("hidden");}
+function setMark(kind){const w=data.words[index].word;data.known=data.known.filter(x=>x!==w);data.review=data.review.filter(x=>x!==w);if(kind==="known")data.known.push(w);else data.review.push(w);save();index=(index+1)%data.words.length;renderCard();}
+function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));["study","quiz","bank"].forEach(id=>$(id).classList.toggle("hidden",id!==tab));if(tab==="bank")renderList();}
+document.querySelectorAll(".tab").forEach(b=>b.addEventListener("click",()=>switchTab(b.dataset.tab)));
+$("prevBtn").onclick=()=>{index--;renderCard()};$("nextBtn").onclick=()=>{index++;renderCard()};$("revealBtn").onclick=showMeaning;$("knownBtn").onclick=()=>setMark("known");$("againBtn").onclick=()=>setMark("review");
+function startQuiz(){
+ if(data.words.length<2){alert("至少需要两个单词才能开始测验。");return}
+ quizDeck=[...data.words].sort(()=>Math.random()-.5);quizIndex=0;score=0;answered=false;$("quizDone").classList.add("hidden");$("quizArea").classList.remove("hidden");showQuestion();
+}
+function showQuestion(){
+ answered=false;const w=quizDeck[quizIndex];$("quizCount").textContent=(quizIndex+1)+" / "+quizDeck.length;$("quizBar").style.width=(quizIndex/quizDeck.length*100)+"%";
+ $("question").textContent="“"+w.word+"” 的意思是？";$("feedback").classList.add("hidden");$("options").innerHTML="";
+ const wrong=data.words.filter(x=>x.word!==w.word).sort(()=>Math.random()-.5).slice(0,3);
+ const opts=[w,...wrong].sort(()=>Math.random()-.5);
+ opts.forEach(o=>{const b=document.createElement("button");b.className="option";b.textContent=o.meaning;b.onclick=()=>chooseAnswer(b,o,w);$("options").appendChild(b)});
+ $("nextQuestionBtn").textContent="确认答案";$("nextQuestionBtn").disabled=false;
+}
+function chooseAnswer(btn,opt,w){
+ if(answered)return;answered=true;const correct=opt.word===w.word;if(correct)score++;
+ document.querySelectorAll(".option").forEach(b=>{b.disabled=true;if(b.textContent===w.meaning)b.classList.add("correct")});
+ if(!correct)btn.classList.add("wrong");
+ $("feedback").classList.remove("hidden");$("feedback").textContent=(correct?"回答正确！":"还需要复习。")+" 正确释义："+w.meaning+(w.detail?"。"+w.detail:"");
+ if(!correct&&!data.review.includes(w.word))data.review.push(w.word);if(correct){data.known=data.known.filter(x=>x!==w.word)}save();
+ $("nextQuestionBtn").textContent=quizIndex===quizDeck.length-1?"查看结果":"下一题";
+}
+$("nextQuestionBtn").onclick=()=>{if(!quizDeck.length){startQuiz();return}if(!answered){$("feedback").classList.remove("hidden");$("feedback").textContent="请先选择一个答案。";return}quizIndex++;if(quizIndex>=quizDeck.length){$("quizArea").classList.add("hidden");$("quizDone").classList.remove("hidden");$("scoreText").textContent=`本轮答对 ${score} / ${quizDeck.length} 题，正确率 ${Math.round(score/quizDeck.length*100)}%。`;return}showQuestion()};
+$("restartQuiz").onclick=startQuiz;
+function renderList(){
+ $("wordList").innerHTML="";data.words.forEach((w,i)=>{const row=document.createElement("div");row.className="item";const left=document.createElement("div");const strong=document.createElement("strong");strong.textContent=w.word;const small=document.createElement("small");small.textContent=w.meaning;left.append(strong,small);const del=document.createElement("button");del.className="btn danger";del.style.flex="0";del.style.padding="8px 10px";del.textContent="删除";del.onclick=()=>{if(confirm("删除 "+w.word+"？")){data.words.splice(i,1);data.known=data.known.filter(x=>x!==w.word);data.review=data.review.filter(x=>x!==w.word);index=0;save();renderCard()}};row.append(left,del);$("wordList").appendChild(row)});
+ if(!data.words.length)$("wordList").innerHTML='<div class="empty">词库为空，请添加单词或导入备份。</div>';renderStats();
+}
+$("addWord").onclick=()=>{const word=$("newWord").value.trim(),meaning=$("newMeaning").value.trim(),pos=$("newPos").value.trim();if(!word||!meaning){alert("请填写英文单词和中文释义。");return}if(data.words.some(w=>w.word.toLowerCase()===word.toLowerCase())){alert("这个单词已经在词库中。");return}data.words.push({word,meaning,pos:pos||"单词",detail:""});$("newWord").value="";$("newMeaning").value="";$("newPos").value="";save();renderCard();});
+$("exportBtn").onclick=()=>{const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="vocabflash-backup.json";a.click();URL.revokeObjectURL(a.href)};
+$("importBtn").onclick=()=>$("importFile").click();
+$("importFile").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{const x=JSON.parse(await f.text());if(!Array.isArray(x.words))throw Error();data={words:x.words,known:Array.isArray(x.known)?x.known:[],review:Array.isArray(x.review)?x.review:[]};save();index=0;renderCard();alert("导入成功。")}catch(err){alert("文件格式不正确，无法导入。")}e.target.value=""};
+renderStats();renderCard();renderList();
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
+</script>
+</body>
+</html>
