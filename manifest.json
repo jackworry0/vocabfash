@@ -1,7 +1,7 @@
 {
   "name": "词汇自查 · CET-4/6",
   "short_name": "词汇自查",
-  "description": "离线单词卡、四选一测验和个人词库",
+  "description": "离线单词卡、四选一测验、英文拼写训练、词库备份和每分钟随机轮换的内置背景",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

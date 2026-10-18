@@ -1,7 +1,11 @@
 // 网络优先：在线尽快拿到新版本，离线回退到已缓存资源。
 // 以后修改 index.html / manifest / 图标时，请同步升级此版本号。
-const CACHE = "vocabflash-cache-v3";
-const ASSETS = ["./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png"];
+const CACHE = "vocabflash-cache-v5";
+const ASSETS = [
+ "./", "./index.html", "./manifest.json", "./icon-192.png", "./icon-512.png",
+ "./wallpaper-01.jpg", "./wallpaper-02.jpg", "./wallpaper-03.jpg", "./wallpaper-04.jpg",
+ "./wallpaper-05.jpg", "./wallpaper-06.jpg", "./wallpaper-07.jpg"
+];
 
 self.addEventListener("install", event => {
  event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));

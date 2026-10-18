@@ -35,11 +35,21 @@
     .row{display:flex;align-items:center;justify-content:space-between;gap:10px}.list{display:grid;gap:8px}.item{background:#fff;border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;justify-content:space-between;gap:12px;align-items:center}.item strong{display:block}.item small{color:var(--muted)}
     input[type=text]{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;margin:8px 0}
     .empty{color:var(--muted);padding:16px 0;line-height:1.6}.hidden{display:none!important}
+    .app{position:relative;z-index:1}#wallpaperLayer{position:fixed;inset:0;pointer-events:none;z-index:0;background-position:center;background-size:cover;background-repeat:no-repeat;transition:background-image .25s}
+    #wallpaperLayer::after{content:"";position:absolute;inset:0;background:rgba(245,247,252,.28)}
+    .panel,.card,.stat,.item{background:rgba(255,255,255,.93)}
+    nav{grid-template-columns:repeat(3,minmax(0,1fr))}.tab{font-size:13px}
+    .control{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff;padding:12px;margin:8px 0 12px;color:var(--ink)}
+    .full{width:100%;margin-top:12px}.compact-actions{margin-top:7px}.enriched{margin-top:14px}.enrich-row{padding:12px 0;border-top:1px solid var(--line);font-size:14px;line-height:1.65;white-space:pre-line;color:#48536a}
+    .enrich-row strong{color:var(--ink)}.bg-gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}
+    .bg-item{border:1px solid var(--line);border-radius:12px;overflow:hidden;background:#fff}.bg-item img{display:block;width:100%;height:124px;object-fit:cover}.bg-item .row{padding:8px}.bg-item span{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}.bg-item button{border-radius:8px;padding:5px 9px;background:#fff0f1;color:var(--red);font-size:12px}
+    #spellInput{font-size:18px}
     footer{font-size:12px;color:var(--muted);text-align:center;padding:18px 4px}
     @media(min-width:600px){.app{padding-top:24px}.word{font-size:42px}}
   </style>
 </head>
 <body>
+<div id="wallpaperLayer" aria-hidden="true"></div>
 <div class="app">
   <header>
     <div><h1>词汇自查</h1><div class="sub">CET-4 / CET-6 · 每天进步一点</div></div>
@@ -48,7 +58,9 @@
   <nav>
     <button class="tab active" data-tab="study">单词卡</button>
     <button class="tab" data-tab="quiz">自我测验</button>
+    <button class="tab" data-tab="spelling">拼写训练</button>
     <button class="tab" data-tab="bank">词库管理</button>
+    <button class="tab" data-tab="backgrounds">背景图片</button>
   </nav>
   <section id="study">
     <div class="statgrid">
@@ -71,6 +83,7 @@
       <div id="cardBack" class="hidden">
         <div class="meaning" id="meaning"></div>
         <div class="detail" id="details"></div>
+        <div id="enrichedDetails" class="enriched"></div>
         <div class="actions">
           <button class="btn danger" id="againBtn">还不熟</button>
           <button class="btn success" id="knownBtn">已掌握</button>
@@ -99,6 +112,41 @@
       </div>
     </div>
   </section>
+  <section id="spelling" class="hidden">
+    <div class="panel">
+      <div class="eyebrow">中文提示 · 英文默写</div>
+      <p class="sub" style="line-height:1.7">看到中文释义后默写英文。拼错的词自动加入“待复习”，复习计划保存在本机。这里不会自动把答对的词标为“已掌握”。</p>
+      <label class="sub" for="spellMode">练习范围</label>
+      <select id="spellMode" class="control">
+        <option value="all">全部单词</option>
+        <option value="unmastered">未掌握的单词</option>
+        <option value="review">待复习及到期单词</option>
+      </select>
+      <button id="spellStart" class="btn primary full">开始拼写训练</button>
+    </div>
+    <div class="panel hidden" id="spellSession">
+      <div class="row"><span class="eyebrow">拼写训练</span><span class="sub" id="spellCount">0 / 0</span></div>
+      <div class="progress"><div class="bar" id="spellBar"></div></div>
+      <div id="spellQuestionArea">
+        <div class="sub" id="spellPos" style="margin-top:20px"></div>
+        <div class="question" id="spellMeaning"></div>
+        <label for="spellInput" class="sub">请输入英文单词</label>
+        <input id="spellInput" type="text" placeholder="在这里输入英文" autocapitalize="off" autocomplete="off" autocorrect="off" spellcheck="false" enterkeyhint="done">
+        <div class="actions compact-actions">
+          <button class="btn secondary" id="spellHint">提示首字母</button>
+          <button class="btn primary" id="spellCheck">检查拼写</button>
+        </div>
+        <div id="spellFeedback" class="feedback hidden" role="status"></div>
+        <button id="spellNext" class="btn primary full hidden">下一词</button>
+      </div>
+      <div id="spellComplete" class="hidden">
+        <div class="meaning">本轮拼写完成！</div>
+        <p id="spellResult"></p>
+        <button id="spellRestart" class="btn primary full">再练一次</button>
+      </div>
+    </div>
+    <div class="panel"><div class="eyebrow">记忆建议</div><p class="sub" style="line-height:1.65">今天写错的词会优先进入复习；正确的词会根据连续答对次数，在约 1、3、7、14、30 天后安排下一次拼写复习。这是一套简易复习规则，并非保证记忆效果的算法。</p></div>
+  </section>
   <section id="bank" class="hidden">
     <div class="panel">
       <div class="eyebrow">添加自己的单词</div>
@@ -110,9 +158,35 @@
     </div>
     <div class="panel">
       <div class="row"><div class="eyebrow">我的词库</div><button class="btn secondary" id="exportBtn" style="flex:0;padding:9px 12px">导出备份</button></div>
+      <input id="searchWord" type="text" placeholder="搜索英文单词或中文释义" aria-label="搜索词库">
+      <select id="bankFilter" class="control" aria-label="按掌握状态筛选">
+        <option value="all">全部单词</option>
+        <option value="known">已掌握</option>
+        <option value="review">待复习</option>
+        <option value="other">未标记</option>
+      </select>
+      <div class="sub" id="bankCount" style="margin-top:12px"></div>
       <div class="list" id="wordList" style="margin-top:12px"></div>
       <input type="file" id="importFile" accept=".json,application/json" class="hidden">
       <button class="btn secondary" id="importBtn" style="width:100%;margin-top:12px">导入词库备份</button>
+    </div>
+  </section>
+  <section id="backgrounds" class="hidden">
+    <div class="panel">
+      <div class="eyebrow">专属轮换背景 · 7 张</div>
+      <p class="sub" style="line-height:1.7">本版本只使用你新提供的 7 张图片，已经适配 iPhone 竖屏并内置在应用中。旧版自行添加的背景图片不会继续显示。</p>
+      <div id="bgStorageStatus" class="sub" role="status" style="margin-top:10px"></div>
+      <div class="bg-gallery" id="bgGallery"></div>
+    </div>
+    <div class="panel">
+      <label for="bgMode" class="eyebrow">背景切换方式</label>
+      <select id="bgMode" class="control">
+        <option value="1">每 1 分钟自动随机（默认）</option>
+        <option value="launch">只在每次打开时随机</option>
+        <option value="fixed">保持当前图片不变</option>
+      </select>
+      <button id="bgNext" class="btn secondary full">立即换一张</button>
+      <p class="sub" style="line-height:1.7">每次重新打开应用会随机选一张；运行期间大约每 60 秒切换一次，不会连续选中同一张。切到后台时 iPhone 可能暂停计时，回到前台会检查是否需要换图。</p>
     </div>
   </section>
   <footer>学习工具原型 · 内容仅供复习参考，请核对重要释义</footer>
@@ -152,17 +226,17 @@ function renderCard(){
  ["prevBtn","nextBtn","revealBtn"].forEach(id=>$(id).disabled=empty);
  if(empty){
   index=0;$("word").textContent="词库为空";$("pos").textContent="请到“词库管理”添加或导入单词";
-  $("meaning").textContent="";$("details").textContent="";
+  $("meaning").textContent="";$("details").textContent="";$("enrichedDetails").textContent="";
   $("counter").textContent="0 / 0";$("studyBar").style.width="0%";return;
  }
  if(index>=data.words.length)index=0;if(index<0)index=data.words.length-1;
  const w=data.words[index];$("word").textContent=w.word;$("pos").textContent=w.pos||"单词";
  $("counter").textContent=(index+1)+" / "+data.words.length;$("studyBar").style.width=((index+1)/data.words.length*100)+"%";
- $("meaning").textContent=w.meaning;$("details").textContent=w.detail||"";
+ $("meaning").textContent=w.meaning;$("details").textContent=w.detail||"";renderEnrichment(w);
 }
 function showMeaning(){if(!data.words.length)return;$("cardFront").classList.add("hidden");$("cardBack").classList.remove("hidden");}
 function setMark(kind){if(!data.words.length)return;const w=data.words[index].word;data.known=data.known.filter(x=>x!==w);data.review=data.review.filter(x=>x!==w);if(kind==="known")data.known.push(w);else data.review.push(w);save();index=(index+1)%data.words.length;renderCard();}
-function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));["study","quiz","bank"].forEach(id=>$(id).classList.toggle("hidden",id!==tab));if(tab==="bank")renderList();}
+function switchTab(tab){document.querySelectorAll(".tab").forEach(b=>b.classList.toggle("active",b.dataset.tab===tab));["study","quiz","spelling","bank","backgrounds"].forEach(id=>$(id).classList.toggle("hidden",id!==tab));if(tab==="bank")renderList();}
 function resetQuiz(){
  quizDeck=[];quizIndex=0;score=0;answered=false;
  $("quizCount").textContent="准备开始";$("quizBar").style.width="0%";
@@ -200,8 +274,15 @@ function chooseAnswer(btn,opt,w){
 $("nextQuestionBtn").onclick=()=>{if(!quizDeck.length){startQuiz();return}if(!answered){$("feedback").classList.remove("hidden");$("feedback").textContent="请先选择一个答案。";return}quizIndex++;if(quizIndex>=quizDeck.length){$("quizArea").classList.add("hidden");$("quizDone").classList.remove("hidden");$("scoreText").textContent=`本轮答对 ${score} / ${quizDeck.length} 题，正确率 ${Math.round(score/quizDeck.length*100)}%。`;return}showQuestion()};
 $("restartQuiz").onclick=startQuiz;
 function renderList(){
- $("wordList").innerHTML="";data.words.forEach((w,i)=>{const row=document.createElement("div");row.className="item";const left=document.createElement("div");const strong=document.createElement("strong");strong.textContent=w.word;const small=document.createElement("small");small.textContent=w.meaning;left.append(strong,small);const del=document.createElement("button");del.className="btn danger";del.style.flex="0";del.style.padding="8px 10px";del.textContent="删除";del.onclick=()=>{if(confirm("删除 "+w.word+"？")){data.words.splice(i,1);data.known=data.known.filter(x=>x!==w.word);data.review=data.review.filter(x=>x!==w.word);index=0;save();renderCard();resetQuiz()}};row.append(left,del);$("wordList").appendChild(row)});
- if(!data.words.length)$("wordList").innerHTML='<div class="empty">词库为空，请添加单词或导入备份。</div>';renderStats();
+ const query=$("searchWord").value.trim().toLowerCase(),filter=$("bankFilter").value;
+ $("wordList").innerHTML="";
+ const matches=data.words.map((w,i)=>({w,i})).filter(({w})=>{
+  const status=filter==="all" || (filter==="known"&&data.known.includes(w.word)) || (filter==="review"&&data.review.includes(w.word)) || (filter==="other"&&!data.known.includes(w.word)&&!data.review.includes(w.word));
+  return status && (!query || (w.word+" "+w.meaning).toLowerCase().includes(query));
+ });
+ $("bankCount").textContent=`显示 ${matches.length} / ${data.words.length} 词`;
+ matches.forEach(({w,i})=>{const row=document.createElement("div");row.className="item";const left=document.createElement("div");const strong=document.createElement("strong");strong.textContent=w.word;const small=document.createElement("small");small.textContent=w.meaning;left.append(strong,small);const del=document.createElement("button");del.className="btn danger";del.style.flex="0";del.style.padding="8px 10px";del.textContent="删除";del.onclick=()=>{if(confirm("删除 "+w.word+"？")){data.words.splice(i,1);data.known=data.known.filter(x=>x!==w.word);data.review=data.review.filter(x=>x!==w.word);if(data.spellingProgress)delete data.spellingProgress[w.word];index=0;save();renderCard();resetQuiz()}};row.append(left,del);$("wordList").appendChild(row)});
+ if(!matches.length)$("wordList").innerHTML='<div class="empty">没有符合条件的单词。</div>';renderStats();
 }
 $("addWord").onclick=()=>{const word=$("newWord").value.trim(),meaning=$("newMeaning").value.trim(),pos=$("newPos").value.trim();if(!word||!meaning){alert("请填写英文单词和中文释义。");return}if(data.words.some(w=>w.word.toLowerCase()===word.toLowerCase())){alert("这个单词已经在词库中。");return}data.words.push({word,meaning,pos:pos||"单词",detail:""});$("newWord").value="";$("newMeaning").value="";$("newPos").value="";save();renderCard();resetQuiz();};
 $("exportBtn").onclick=()=>{
@@ -230,6 +311,162 @@ $("importFile").onchange=async e=>{
  }catch(err){alert("文件格式不正确，无法导入："+err.message);}
  finally{e.target.value="";}
 };
+// EXTRA_FEATURES_START
+// 扩展词条展示：仅显示导入文件已经提供的数据，未验证的真题信息不得标注为“已核实”。
+function renderEnrichment(w){
+ const root=$("enrichedDetails");root.replaceChildren();
+ const line=(name,content)=>{if(!content)return;const node=document.createElement("div");node.className="enrich-row";const header=document.createElement("strong");header.textContent=name+"：";node.append(header,document.createTextNode(content));root.appendChild(node)};
+ if(Array.isArray(w.senses))line("不同词性与词义",w.senses.map(v=>typeof v==="string"?v:((v.pos||"")+" "+(v.meaning||"")+(v.examVerified?" [有已核实真题证据]":" [补充释义/待核实]"))).join("\n"));
+ if(Array.isArray(w.family))line("同根词 / 派生词",w.family.map(v=>typeof v==="string"?v:((v.word||"")+" · "+(v.pos||"")+" "+(v.meaning||""))).join("\n"));
+ if(Array.isArray(w.collocations))line("常见搭配",w.collocations.map(v=>typeof v==="string"?v:((v.phrase||"")+" — "+(v.meaning||""))).join("\n"));
+ if(Array.isArray(w.examEvidence))line("四级真题证据",w.examEvidence.map(v=>{
+  if(typeof v==="string")return "待核实："+v;
+  const source=[v.year,v.month,v.paper,v.section,v.location].filter(Boolean).join(" · ");
+  return (v.verified===true?"已核实":"待核实")+"｜"+source+(v.meaning?"\n考义："+v.meaning:"")+(v.excerpt?"\n原文片段："+v.excerpt:"");
+ }).join("\n\n"));
+}
+
+// 拼写与错词复习，仍沿用原 localStorage 数据对象和 JSON 备份格式。
+let spellDeck=[],spellIndex=0,spellCorrect=0,spellWrong=0,spellAnswered=false,spellHintUsed=false;
+function progressFor(word){
+ if(!data.spellingProgress||typeof data.spellingProgress!=="object")data.spellingProgress={};
+ return data.spellingProgress[word]||{streak:0,due:0,wrong:0};
+}
+function spellCandidates(){
+ const mode=$("spellMode").value,now=Date.now();
+ if(mode==="unmastered")return data.words.filter(w=>!data.known.includes(w.word));
+ if(mode==="review")return data.words.filter(w=>data.review.includes(w.word)||(data.spellingProgress&&data.spellingProgress[w.word]&&data.spellingProgress[w.word].due<=now));
+ return data.words;
+}
+function startSpelling(){
+ const words=spellCandidates();
+ if(!words.length){alert("当前范围没有单词。你可以选择“全部单词”，或先添加需要复习的单词。");return;}
+ spellDeck=shuffle(words);spellIndex=0;spellCorrect=0;spellWrong=0;
+ $("spellSession").classList.remove("hidden");$("spellComplete").classList.add("hidden");$("spellQuestionArea").classList.remove("hidden");
+ showSpelling();
+}
+function showSpelling(){
+ const w=spellDeck[spellIndex];spellAnswered=false;spellHintUsed=false;
+ $("spellCount").textContent=`${spellIndex+1} / ${spellDeck.length}`;
+ $("spellBar").style.width=`${spellIndex/spellDeck.length*100}%`;
+ $("spellMeaning").textContent=w.meaning;
+ $("spellPos").textContent=w.pos||"单词";
+ $("spellInput").value="";$("spellInput").disabled=false;
+ $("spellHint").disabled=false;$("spellCheck").disabled=false;
+ $("spellFeedback").classList.add("hidden");$("spellNext").classList.add("hidden");
+ $("spellNext").textContent=spellIndex===spellDeck.length-1?"查看成绩":"下一词";
+ $("spellInput").focus();
+}
+function checkSpelling(){
+ if(spellAnswered || !spellDeck.length)return;
+ const entered=$("spellInput").value.trim().normalize("NFKC");
+ if(!entered){$("spellFeedback").textContent="请先输入英文单词。";$("spellFeedback").classList.remove("hidden");return;}
+ const w=spellDeck[spellIndex],correct=entered.toLocaleLowerCase("en")===w.word.trim().normalize("NFKC").toLocaleLowerCase("en");
+ spellAnswered=true;if(correct)spellCorrect++;else spellWrong++;
+ const prev=progressFor(w.word),streak=correct?(prev.streak||0)+1:0;
+ const days=[1,3,7,14,30][Math.min(streak-1,4)]||0;
+ data.spellingProgress[w.word]={streak,wrong:(prev.wrong||0)+(correct?0:1),last:Date.now(),due:correct?Date.now()+days*86400000:Date.now()};
+ if(!correct){data.known=data.known.filter(x=>x!==w.word);if(!data.review.includes(w.word))data.review.push(w.word);}
+ save();
+ $("spellFeedback").textContent=(correct?"✓ 拼写正确！":"✗ 需要复习。你输入的是："+entered)+"\n正确拼写："+w.word+(spellHintUsed?"\n本题使用过首字母提示。":"");
+ $("spellFeedback").style.whiteSpace="pre-line";$("spellFeedback").classList.remove("hidden");
+ $("spellInput").disabled=true;$("spellHint").disabled=true;$("spellCheck").disabled=true;$("spellNext").classList.remove("hidden");
+}
+function nextSpelling(){
+ if(!spellAnswered)return;
+ spellIndex++;
+ if(spellIndex>=spellDeck.length){
+  $("spellQuestionArea").classList.add("hidden");$("spellComplete").classList.remove("hidden");
+  $("spellBar").style.width="100%";$("spellCount").textContent=`${spellDeck.length} / ${spellDeck.length}`;
+  $("spellResult").textContent=`本轮答对 ${spellCorrect} / ${spellDeck.length} 词，拼错 ${spellWrong} 词。错词已加入待复习。`;
+ }else showSpelling();
+}
+$("spellStart").onclick=startSpelling;$("spellRestart").onclick=startSpelling;
+$("spellCheck").onclick=checkSpelling;$("spellNext").onclick=nextSpelling;
+$("spellInput").addEventListener("keydown",e=>{if(e.key==="Enter"){e.preventDefault();if(!spellAnswered)checkSpelling();else nextSpelling();}});
+$("spellHint").onclick=()=>{if(!spellDeck.length||spellAnswered)return;spellHintUsed=true;const word=spellDeck[spellIndex].word;$("spellFeedback").textContent=`首字母：${word.slice(0,1)}（共 ${[...word].length} 个字符）`;$("spellFeedback").classList.remove("hidden");};
+$("searchWord").addEventListener("input",renderList);
+$("bankFilter").addEventListener("change",renderList);
+
+// v5: 固定使用本次提供的七张壁纸，文件均位于仓库根目录，供 PWA 离线使用。
+// 旧版 IndexedDB 背景仅用于壁纸：升级后删除旧背景，绝不触碰词库或拼写进度。
+const BG_MODE_KEY="vocabflash_bg_mode_v2",BG_LAST_KEY="vocabflash_bg_last_v2";
+const BG_ASSETS=[
+ {name:"灰毡帽皮卡丘卡牌",url:"./wallpaper-01.jpg"},
+ {name:"黑帽皮卡丘",url:"./wallpaper-02.jpg"},
+ {name:"浅色花裙肖像",url:"./wallpaper-03.jpg"},
+ {name:"夕阳黑裙肖像",url:"./wallpaper-04.jpg"},
+ {name:"庭院肖像",url:"./wallpaper-05.jpg"},
+ {name:"教室比耶肖像",url:"./wallpaper-06.jpg"},
+ {name:"教室坐姿肖像",url:"./wallpaper-07.jpg"}
+];
+let bgCurrent=-1,bgTicker=null,bgLastChange=0;
+const bgModes=new Set(["1","launch","fixed"]);
+function getBgMode(){try{const m=localStorage.getItem(BG_MODE_KEY)||"1";return bgModes.has(m)?m:"1";}catch(e){return "1";}}
+function setBgOption(key,val){try{localStorage.setItem(key,String(val));}catch(e){}}
+function retireLegacyBackgrounds(){
+ try{localStorage.removeItem("vocabflash_bg_mode_v1");localStorage.removeItem("vocabflash_bg_last_v1");}catch(e){}
+ if(!window.indexedDB)return;
+ try{
+  const request=indexedDB.deleteDatabase("vocabflash_wallpapers_v1");
+  request.onerror=()=>{}; // Safari 存储可能不可用；不影响内置背景。
+  request.onblocked=()=>{}; // 其它旧网页未关闭时下次启动会再次尝试。
+ }catch(e){}
+}
+function chooseBackground(random=true){
+ let index;
+ if(random){
+  const choices=BG_ASSETS.map((_,i)=>i).filter(i=>i!==bgCurrent);
+  const pool=choices.length?choices:BG_ASSETS.map((_,i)=>i);
+  index=pool[Math.floor(Math.random()*pool.length)];
+ }else{
+  let saved=-1;
+  try{saved=Number(localStorage.getItem(BG_LAST_KEY));}catch(e){}
+  index=Number.isInteger(saved)&&saved>=0&&saved<BG_ASSETS.length?saved:0;
+ }
+ bgCurrent=index;
+ document.getElementById("wallpaperLayer").style.backgroundImage=`url("${BG_ASSETS[index].url}")`;
+ setBgOption(BG_LAST_KEY,index);
+ bgLastChange=Date.now();
+ renderBgGallery();
+}
+function scheduleBg(){
+ if(bgTicker){clearInterval(bgTicker);bgTicker=null;}
+ if(getBgMode()!=="1")return;
+ bgTicker=setInterval(()=>{
+  if(!document.hidden&&Date.now()-bgLastChange>=60000)chooseBackground(true);
+ },2000);
+}
+function renderBgGallery(){
+ const gallery=document.getElementById("bgGallery");gallery.replaceChildren();
+ BG_ASSETS.forEach((item,index)=>{
+  const cell=document.createElement("div");cell.className="bg-item";
+  const img=document.createElement("img");img.src=item.url;img.alt=item.name;img.loading="lazy";
+  const info=document.createElement("div");info.className="row";
+  const label=document.createElement("span");label.textContent=(index+1)+". "+item.name+(index===bgCurrent?" · 当前":"");
+  info.append(label);cell.append(img,info);gallery.append(cell);
+ });
+ document.getElementById("bgStorageStatus").textContent="当前内置 7 张 · 默认每分钟随机换图 · 可离线显示";
+}
+retireLegacyBackgrounds();
+document.getElementById("bgMode").value=getBgMode();
+document.getElementById("bgMode").onchange=()=>{
+ const mode=document.getElementById("bgMode").value;
+ setBgOption(BG_MODE_KEY,mode);
+ if(mode==="launch")chooseBackground(true);
+ if(mode==="1")bgLastChange=Date.now();
+ scheduleBg();
+};
+document.getElementById("bgNext").onclick=()=>chooseBackground(true);
+document.addEventListener("visibilitychange",()=>{
+ if(document.hidden)return;
+ if(getBgMode()==="launch")chooseBackground(true);
+ else if(getBgMode()==="1"&&Date.now()-bgLastChange>=60000)chooseBackground(true);
+});
+chooseBackground(getBgMode()!=="fixed");
+scheduleBg();
+
+// EXTRA_FEATURES_END
 renderStats();renderCard();renderList();
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}))}
 </script>
